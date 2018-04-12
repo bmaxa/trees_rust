@@ -1,0 +1,12 @@
+[package]
+name = "binary_trees"
+version = "1.0.0"
+authors = ["Branimir Maksimovic <branimir.maksimovic@gmail.com>"]
+
+[dependencies]
+rand = "0.4"
+time = "0.1"
+
+[profile.release]
+opt-level = 3
+lto = true
