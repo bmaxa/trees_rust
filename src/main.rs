@@ -1,5 +1,3 @@
-#![link_args="src/rdtsc.o"]
-#![feature(link_args)]
 #![feature(rand)]
 #![feature(rustc_private)]
 extern crate binary_trees;
