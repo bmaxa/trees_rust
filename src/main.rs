@@ -1,15 +1,19 @@
-#![feature(rand)]
+//#![feature(rand)]
 #![feature(rustc_private)]
+#![feature(core_intrinsics)]
 extern crate binary_trees;
 use std::mem;
 use binary_trees::Node;
 use binary_trees::avl::*;
 use binary_trees::treap::*;
 use binary_trees::rb::*;
+use binary_trees::sg::*;
+use binary_trees::Tree;
 extern crate rand;
 use rand::*;
 use std::time::*;
 use std::collections::BTreeMap;
+use std::fmt::Debug;
 
 extern {
     fn _rdtsc()->u64;
@@ -18,6 +22,24 @@ static N:i32 = 1000000;
 
 struct Trta {
     a: [i32;512]
+}
+
+fn bench<T:Debug>(t :&mut Tree<String,i32,T>,v:&Vec<String>,op:&str) {
+    let start = Instant::now();
+    let mut k = 0;
+    let mut sum = 0;
+    for i in v.iter().rev() {
+        let start = unsafe {_rdtsc()};
+        t.insert(i.clone(),k);
+        k += 1;
+        let end = unsafe{_rdtsc()};
+        sum += end-start;
+    }
+    println!("average op {}",sum/v.len()as u64);
+    let end = start.elapsed();
+    let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
+    let (l,r) = t.weight();
+    println!("{} {} time {}\n{}\nheight {}\nweight ({},{})",unsafe{std::intrinsics::type_name::<Tree<String,i32,T>>()},op,diff,t.validate(),t.height(),l,r);
 }
 fn seed()->[u32;4] {
     use std::io::prelude::*;
@@ -35,11 +57,14 @@ fn main() {
     let mut avl = Avl::new::<i32,i32>();
     let mut treap = Treap::new::<i32,i32>();
     let mut rb = Rb::new::<i32,i32>();
+    let mut sg = Sg::new::<i32,i32>();
     for i in a.iter() {
         avl.insert(*i,*i);
         treap.insert(*i,*i);
         rb.insert(*i,*i);
+        sg.insert(*i,*i);
         println!("{}",rb.to_string());
+        println!("{}",sg.to_string());
     }
     println!("{}\n{}",rb.to_string(),rb.validate());
     let mut iter = avl.iter();
@@ -89,6 +114,7 @@ fn main() {
     let mut t = Avl::new::<String,i32>();
     let mut t1 = Treap::new::<String,i32>();
     let mut t2 = Rb::new::<String,i32>();
+    let mut t3 = Sg::new::<String,i32>();
     let mut bt: BTreeMap<String,i32> = BTreeMap::new();
 
     let start = Instant::now();
@@ -136,8 +162,23 @@ fn main() {
     println!("average op {}",sum/v.len()as u64);
     let end = start.elapsed();
     let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
-    let (l,r) = t1.weight();
+    let (l,r) = t2.weight();
     println!("t2 insert time {}\n{}\nheight {}\nweight ({},{})",diff,t2.validate(),t2.height(),l,r);
+    let start = Instant::now();
+    let mut k = 0;
+    let mut sum = 0;
+    for i in v.iter().rev() {
+        let start = unsafe {_rdtsc()};
+        t3.insert(i.clone(),k);
+        k += 1;
+        let end = unsafe{_rdtsc()};
+        sum += end-start;
+    }
+    println!("average op {}",sum/v.len()as u64);
+    let end = start.elapsed();
+    let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
+    let (l,r) = t3.weight();
+    println!("t3 insert time {}\n{}\nheight {}\nweight ({},{})",diff,t3.validate(),t3.height(),l,r);
     let start = Instant::now();
     let mut k = 0;
     let mut sum = 0;
@@ -193,6 +234,19 @@ fn main() {
     let start = Instant::now();
     let mut sum = 0;
     for i in vd.iter() {
+//      let j = t2.find(i);
+//      if let Some(v) = j.value() {
+//      sum += *v.borrow();
+        sum += t3[i];
+//    }
+    }
+    let end = start.elapsed();
+    let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
+    println!("t3 find time {}\n{}\nsum {}",diff,t3.validate(),sum);
+
+    let start = Instant::now();
+    let mut sum = 0;
+    for i in vd.iter() {
         let a = bt.get(i).unwrap();
         sum += *a;
     }
@@ -239,6 +293,18 @@ fn main() {
     let start = Instant::now();
     let mut sum:i32 = 0;
     let st = unsafe {_rdtsc()};
+    for (_,v) in t3.iter() {
+        sum += *v.borrow();
+    }
+    let end = unsafe{_rdtsc()};
+    println!("average op {}",(end-st)/v.len()as u64);
+    let end = start.elapsed();
+    let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
+    println!("t3 iter time {}\n{}\nsum {}",diff,t3.validate(),sum);
+
+    let start = Instant::now();
+    let mut sum:i32 = 0;
+    let st = unsafe {_rdtsc()};
     for (_,v) in bt.iter() {
         sum += *v;
     }
@@ -281,6 +347,17 @@ fn main() {
     let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
     println!("t2 delete time {}\n{} size {}",diff,t2.validate(),t2.size());
     println!("{}",t2.to_string());
+
+    let start = Instant::now();
+    for i in vd.iter()/*.take(/*N as usize-*/100)*/ {
+        t3.delete(&i);
+//        assert!(t1.validate());
+    }
+//    t.clear();
+    let end = start.elapsed();
+    let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
+    println!("t3 delete time {}\n{} size {}",diff,t3.validate(),t3.size());
+    println!("{}",t3.to_string());
 
     let start = Instant::now();
     for i in vd.iter()/*.take(N as usize-100)*/ {

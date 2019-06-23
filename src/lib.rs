@@ -9,6 +9,7 @@ use std::ops::*;
 pub mod avl;
 pub mod treap;
 pub mod rb;
+pub mod sg;
 
 type PtrNode<K,V,T> = Option<*mut Node<K,V,T>>;
 pub type PtrKey<T> = *const T;
@@ -23,7 +24,7 @@ pub trait ITree<K:Ord+Clone+Debug,V:Debug,T:Debug> {
 pub struct Tree<K:Ord+Clone+Debug,V:Debug,T:Debug> {
     root: PtrNode<K,V,T>,
     size: usize,
-    pimpl: Box<ITree<K,V,T>>
+    pimpl: Box<dyn ITree<K,V,T>>
 }
 
 impl <K:Ord+Clone+Debug,V:Debug,T:Debug> Drop for Tree<K,V,T>{
@@ -301,7 +302,7 @@ impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug> Index<&'a K> for Tree<K,V,T> 
 }
 
 impl<K:Ord+Clone+Debug,V:Debug,T:Debug> Tree<K,V,T>{
-    pub fn new(pimpl: Box<ITree<K,V,T>>)->Self {
+    pub fn new(pimpl: Box<dyn ITree<K,V,T>>)->Self {
         Tree{root:None,size:0,pimpl:pimpl}
     }
     pub fn size(&self)->usize {
@@ -371,19 +372,19 @@ impl<K:Ord+Clone+Debug,V:Debug,T:Debug> Tree<K,V,T>{
         self.root.to_string("".to_string(),true)
     }
     pub fn insert(&mut self,k:K,v:V)->bool {
-        let pimpl:*mut Box<ITree<K,V,T>> = &mut self.pimpl;
+        let pimpl:*mut Box<dyn ITree<K,V,T>> = &mut self.pimpl;
         unsafe {
             (*pimpl).insert(self,k,v)
         }
     }
     pub fn delete(&mut self,k:&K)->bool {
-        let pimpl:*mut Box<ITree<K,V,T>> = &mut self.pimpl;
+        let pimpl:*mut Box<dyn ITree<K,V,T>> = &mut self.pimpl;
         unsafe {
         (*pimpl).delete(self,k)
         }
     }
     pub fn validate(&mut self)->bool {
-        let pimpl:*mut Box<ITree<K,V,T>> = &mut self.pimpl;
+        let pimpl:*mut Box<dyn ITree<K,V,T>> = &mut self.pimpl;
         unsafe {
         (*pimpl).validate(self)
         }
