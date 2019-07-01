@@ -4,23 +4,19 @@ use GetPtr;
 use std::fmt;
 use std::fmt::Debug;
 extern crate rand;
-use self::rand::*;
-use self::rand::IsaacRng;
+use self::rand::{Rng, SeedableRng};
+use self::rand::rngs::SmallRng;
+
 extern crate time;
 use self::time::precise_time_ns;
 
 pub struct Treap{
-    rng: IsaacRng
+    rng: SmallRng
 }
 impl Treap {
     pub fn new<K:Ord+Clone+Debug,V:Debug>()-> Tree<K,V,TreapData,Treap> {
-        let rc = Treap {rng: Treap::new_from_u64(precise_time_ns()) };
+        let rc = Treap {rng: SmallRng::from_entropy() };
         Tree::new(rc)
-    }
-    fn new_from_u64(seed:u64)->IsaacRng {
-        let buf:[u32;4] = [(seed>>32) as u32 ,(seed&0xffffffff) as u32,
-            (seed>>32) as u32,(seed&0xffffffff) as u32];
-        IsaacRng::from_seed(&buf)
     }
     fn prn(&mut self)->i32 {
         self.rng.gen()

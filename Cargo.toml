@@ -1,12 +1,15 @@
 [package]
 name = "binary_trees"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Branimir Maksimovic <branimir.maksimovic@gmail.com>"]
 
 [dependencies]
-rand = "0.4"
-time = "0.1"
+time = "*"
+
+[dependencies.rand]
+features = ["small_rng"]
 
 [profile.release]
 opt-level = 3
 #lto = true
+

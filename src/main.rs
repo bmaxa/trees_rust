@@ -10,7 +10,10 @@ use binary_trees::rb::*;
 use binary_trees::sg::*;
 use binary_trees::Tree;
 extern crate rand;
-use rand::*;
+use rand::{Rng, SeedableRng};
+use rand::rngs::SmallRng;
+use rand::seq::SliceRandom;
+
 use std::time::*;
 use std::collections::BTreeMap;
 use std::fmt::Debug;
@@ -24,17 +27,6 @@ struct Trta {
     a: [i32;512]
 }
 
-fn seed()->[u32;4] {
-    use std::io::prelude::*;
-    use std::fs::File;
-
-    let mut f = File::open("/dev/urandom").unwrap();
-    let mut buffer = [0u32; 4];
-    // read up to 16 bytes
-    let n = f.read(unsafe{mem::transmute::<&mut [u32;4],&mut [u8;16]>(&mut buffer)});
-    println!("seed {}",n.unwrap());
-    buffer
-}
 fn main() {
     let a:Vec<_> = (0..10).collect();
     let mut avl = Avl::new::<i32,i32>();
@@ -88,9 +80,9 @@ fn main() {
     let d:Vec<i32> = (0..N).collect();
     let mut v:Vec<String> = d.iter().map(|n| {format!("abcd avioni {}",n)}).collect();
     let mut vd = v.clone();
-    let mut rng = rand::isaac::IsaacRng::from_seed(&seed());
-    rng.shuffle(&mut v);
-    rng.shuffle(&mut vd);
+    let mut rng = SmallRng::from_entropy();
+    v.shuffle(&mut rng);
+    vd.shuffle(&mut rng);
     println!("trees! {}",mem::size_of::<Node<i32,i32,AvlData>>());
     println!("treest! {}",mem::size_of::<Node<i32,i32,TreapData>>());
     println!("treesr! {}",mem::size_of::<Node<i32,i32,RbData>>());
