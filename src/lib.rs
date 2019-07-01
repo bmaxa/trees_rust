@@ -15,19 +15,19 @@ type PtrNode<K,V,T> = Option<*mut Node<K,V,T>>;
 pub type PtrKey<T> = *const T;
 pub type PtrValue<T> = Rc<RefCell<T>>;
 
-pub trait ITree<K:Ord+Clone+Debug,V:Debug,T:Debug> {
-    fn insert(&mut self,t:&mut Tree<K,V,T>,k:K,v:V)->bool;
-    fn delete(&mut self,t:&mut Tree<K,V,T>,k:&K)->bool;
-    fn validate(&self,t:&mut Tree<K,V,T>)->bool;
+pub trait ITree<K:Ord+Clone+Debug,V:Debug,T:Debug,Tr:ITree<K,V,T,Tr>> {
+    fn insert(&mut self,t:&mut Tree<K,V,T,Tr>,k:K,v:V)->bool;
+    fn delete(&mut self,t:&mut Tree<K,V,T,Tr>,k:&K)->bool;
+    fn validate(&self,t:&mut Tree<K,V,T,Tr>)->bool;
 }
 
-pub struct Tree<K:Ord+Clone+Debug,V:Debug,T:Debug> {
+pub struct Tree<K:Ord+Clone+Debug,V:Debug,T:Debug,Tr:ITree<K,V,T,Tr>> {
     root: PtrNode<K,V,T>,
     size: usize,
-    pimpl: Box<dyn ITree<K,V,T>>
+    pub pimpl: Tr
 }
 
-impl <K:Ord+Clone+Debug,V:Debug,T:Debug> Drop for Tree<K,V,T>{
+impl <K:Ord+Clone+Debug,V:Debug,T:Debug,Tr:ITree<K,V,T,Tr>> Drop for Tree<K,V,T,Tr>{
     fn drop(&mut self) {
         self.clear();
     }
@@ -254,7 +254,7 @@ impl<K:Ord+Clone+Debug,V:Debug,T:Debug> GetPtr<K,V,T> for PtrNode<K,V,T> {
     }
 }
 
-impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug> IndexMut<&'a K> for Tree<K,V,T> {
+impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug,Tr:ITree<K,V,T,Tr>> IndexMut<&'a K> for Tree<K,V,T,Tr> {
     fn index_mut(&mut self,key:&K)->&mut V{
         let mut n = self.root.clone();
         while !n.is_none() {
@@ -277,7 +277,7 @@ impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug> IndexMut<&'a K> for Tree<K,V,
     }
 }
 
-impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug> Index<&'a K> for Tree<K,V,T> {
+impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug,Tr:ITree<K,V,T,Tr>> Index<&'a K> for Tree<K,V,T,Tr> {
     type Output = V;
     fn index(&self,key:&K)->&V{
         let mut n = self.root.clone();
@@ -301,8 +301,8 @@ impl<'a,K:Debug+Clone+Ord,V:'static+Debug,T:Debug> Index<&'a K> for Tree<K,V,T> 
     }
 }
 
-impl<K:Ord+Clone+Debug,V:Debug,T:Debug> Tree<K,V,T>{
-    pub fn new(pimpl: Box<dyn ITree<K,V,T>>)->Self {
+impl<K:Ord+Clone+Debug,V:Debug,T:Debug,Tr:ITree<K,V,T,Tr>> Tree<K,V,T,Tr>{
+    pub fn new(pimpl: Tr)->Self {
         Tree{root:None,size:0,pimpl:pimpl}
     }
     pub fn size(&self)->usize {
@@ -372,19 +372,19 @@ impl<K:Ord+Clone+Debug,V:Debug,T:Debug> Tree<K,V,T>{
         self.root.to_string("".to_string(),true)
     }
     pub fn insert(&mut self,k:K,v:V)->bool {
-        let pimpl:*mut Box<dyn ITree<K,V,T>> = &mut self.pimpl;
+        let pimpl:*mut Tr = &mut self.pimpl;
         unsafe {
-            (*pimpl).insert(self,k,v)
+        (*pimpl).insert(self,k,v)
         }
     }
     pub fn delete(&mut self,k:&K)->bool {
-        let pimpl:*mut Box<dyn ITree<K,V,T>> = &mut self.pimpl;
+        let pimpl:*mut Tr = &mut self.pimpl;
         unsafe {
         (*pimpl).delete(self,k)
         }
     }
     pub fn validate(&mut self)->bool {
-        let pimpl:*mut Box<dyn ITree<K,V,T>> = &mut self.pimpl;
+        let pimpl:*mut Tr = &mut self.pimpl;
         unsafe {
         (*pimpl).validate(self)
         }

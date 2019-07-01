@@ -7,10 +7,10 @@ use std::fmt::Debug;
 pub struct Avl;
 
 impl Avl{
-    pub fn new<K:Ord+Clone+Debug,V:Debug>()-> Tree<K,V,AvlData> {
-        Tree::new(Box::new(Avl))
+    pub fn new<K:Ord+Clone+Debug,V:Debug>()-> Tree<K,V,AvlData,Avl> {
+        Tree::new(Avl)
     }
-    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData>,n:&PtrNode<K,V,AvlData>)->*mut PtrNode<K,V,AvlData> {
+    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData,Avl>,n:&PtrNode<K,V,AvlData>)->*mut PtrNode<K,V,AvlData> {
     unsafe {
         if n.parent().is_none() {
             return &mut t.root
@@ -23,7 +23,7 @@ impl Avl{
         }
     }    
     }
-    fn delete<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData>,n:&mut PtrNode<K,V,AvlData>){
+    fn delete<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData,Avl>,n:&mut PtrNode<K,V,AvlData>){
         let mut nn = n.clone();
         if !n.left().is_none() && !n.right().is_none() {
             nn = GetPtr::pred(n);
@@ -50,7 +50,7 @@ impl Avl{
         }
         t.size -= 1;
     }
-    fn balance<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData>,n:&mut PtrNode<K,V,AvlData>) {
+    fn balance<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData,Avl>,n:&mut PtrNode<K,V,AvlData>) {
         fixheight(n);
         if bfactor(n) == 2 {
             if bfactor(&n.right())<0 {
@@ -67,7 +67,7 @@ impl Avl{
             return;
         }
     }
-    fn rotate_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData>,x:&mut PtrNode<K,V,AvlData>) {
+    fn rotate_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData,Avl>,x:&mut PtrNode<K,V,AvlData>) {
         if x.right().is_none() {
             panic!("rotate_left:x.Right==nil\n{:?}\n{:?}",t.to_string(),t.size);
         }
@@ -91,7 +91,7 @@ impl Avl{
         fixheight(x);
         fixheight(&mut y);
     }
-    fn rotate_right<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData>,x:&mut PtrNode<K,V,AvlData>) {
+    fn rotate_right<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,AvlData,Avl>,x:&mut PtrNode<K,V,AvlData>) {
         if x.left().is_none() {
             panic!("rotate_right:x.Left==nil\n{:?}\n{:?}",t.to_string(),t.size);
         }
@@ -126,8 +126,8 @@ impl Debug for AvlData{
         write!(f,"(h:{})",self.height)
     }
 }
-impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,AvlData> for Avl {
-    fn insert(&mut self,t:&mut Tree<K,V,AvlData>,k:K,v:V)->bool{
+impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,AvlData,Avl> for Avl {
+    fn insert(&mut self,t:&mut Tree<K,V,AvlData,Avl>,k:K,v:V)->bool{
         if t.root.is_none() {
             t.root = Some(Box::into_raw(Box::new(Node::new(k,v,AvlData{height:1}))));
             t.size += 1;
@@ -165,7 +165,7 @@ impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,AvlData> for Avl {
         }
         true
     }
-    fn delete(&mut self,t:&mut Tree<K,V,AvlData>,k:&K)->bool{
+    fn delete(&mut self,t:&mut Tree<K,V,AvlData,Avl>,k:&K)->bool{
         let mut n = t.find(k).data;
         if !n.is_none() {
             Avl::delete(t,&mut n);
@@ -174,7 +174,7 @@ impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,AvlData> for Avl {
             false
         }
     }
-    fn validate(&self,t:&mut Tree<K,V,AvlData>)->bool{
+    fn validate(&self,t:&mut Tree<K,V,AvlData,Avl>)->bool{
         validate(t.root.clone())
     }
 }

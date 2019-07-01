@@ -13,9 +13,9 @@ pub struct Treap{
     rng: IsaacRng
 }
 impl Treap {
-    pub fn new<K:Ord+Clone+Debug,V:Debug>()-> Tree<K,V,TreapData> {
+    pub fn new<K:Ord+Clone+Debug,V:Debug>()-> Tree<K,V,TreapData,Treap> {
         let rc = Treap {rng: Treap::new_from_u64(precise_time_ns()) };
-        Tree::new(Box::new(rc))
+        Tree::new(rc)
     }
     fn new_from_u64(seed:u64)->IsaacRng {
         let buf:[u32;4] = [(seed>>32) as u32 ,(seed&0xffffffff) as u32,
@@ -25,7 +25,7 @@ impl Treap {
     fn prn(&mut self)->i32 {
         self.rng.gen()
     }
-    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData>,n:&PtrNode<K,V,TreapData>)->*mut PtrNode<K,V,TreapData> {
+    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData,Treap>,n:&PtrNode<K,V,TreapData>)->*mut PtrNode<K,V,TreapData> {
     unsafe {
         if n.parent().is_none() {
             return &mut t.root
@@ -38,7 +38,7 @@ impl Treap {
         }
     }    
     }
-    fn rotate_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData>,x:&mut PtrNode<K,V,TreapData>)->PtrNode<K,V,TreapData> {
+    fn rotate_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData,Treap>,x:&mut PtrNode<K,V,TreapData>)->PtrNode<K,V,TreapData> {
         if x.right().is_none() {
             panic!("rotate_left:x.Right==nil\n{:?}\n{:?}",t.to_string(),t.size);
         }
@@ -61,7 +61,7 @@ impl Treap {
         x.set_parent(y.clone());
         y
     }
-    fn rotate_right<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData>,x:&mut PtrNode<K,V,TreapData>)->PtrNode<K,V,TreapData> {
+    fn rotate_right<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData,Treap>,x:&mut PtrNode<K,V,TreapData>)->PtrNode<K,V,TreapData> {
         if x.left().is_none() {
             panic!("rotate_right:x.Left==nil\n{:?}\n{:?}",t.to_string(),t.size);
         }
@@ -84,7 +84,7 @@ impl Treap {
         x.set_parent(y.clone());
         y
     }
-    fn rebalance_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData>,x:&mut PtrNode<K,V,TreapData>) {
+    fn rebalance_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData,Treap>,x:&mut PtrNode<K,V,TreapData>) {
         if x.is_none() { return; }
         Treap::rebalance_left(t,&mut x.left());
         while let Some(tmpl) =  x.left() {
@@ -95,7 +95,7 @@ impl Treap {
             } else { break; }}
         }
     }
-    fn rebalance_up<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData>,x:&mut PtrNode<K,V,TreapData>) {
+    fn rebalance_up<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,TreapData,Treap>,x:&mut PtrNode<K,V,TreapData>) {
         let mut n = x.clone();
         while let Some(parent) = n.parent() {
             let tmp = n.unwrap();
@@ -119,8 +119,8 @@ impl Debug for TreapData{
         write!(f,"(p:{})",self.priority)
     }
 }
-impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,TreapData> for Treap {
-    fn insert(&mut self,t:&mut Tree<K,V,TreapData>,k:K,v:V)->bool{
+impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,TreapData,Treap> for Treap {
+    fn insert(&mut self,t:&mut Tree<K,V,TreapData,Treap>,k:K,v:V)->bool{
         if t.root.is_none() {
             let n = Node::new(k,v,TreapData{priority:self.prn()});
             t.root = Some(Box::into_raw(Box::new(n)));
@@ -159,7 +159,7 @@ impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,TreapData> for Treap {
         t.size += 1;
         true
     }
-    fn delete(&mut self,t:&mut Tree<K,V,TreapData>,k:&K)->bool{
+    fn delete(&mut self,t:&mut Tree<K,V,TreapData,Treap>,k:&K)->bool{
         let mut rc = None;
         let mut n = t.root.clone();
         while !n.is_none() {
@@ -204,7 +204,7 @@ impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,TreapData> for Treap {
         Treap::rebalance_left(t,&mut reb);
         true
     }
-    fn validate(&self,t:&mut Tree<K,V,TreapData>)->bool{
+    fn validate(&self,t:&mut Tree<K,V,TreapData,Treap>)->bool{
         validate(t.root.clone())
     }
 }

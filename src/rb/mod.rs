@@ -7,10 +7,10 @@ use std::fmt::Debug;
 pub struct Rb;
 
 impl Rb {
-    pub fn new<K:Ord+Clone+Debug,V:Debug>()->Tree<K,V,RbData> {
-        Tree::new(Box::new(Rb))
+    pub fn new<K:Ord+Clone+Debug,V:Debug>()->Tree<K,V,RbData,Rb> {
+        Tree::new(Rb)
     }
-    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData>,n:&PtrNode<K,V,RbData>)->*mut PtrNode<K,V,RbData> {
+    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData,Rb>,n:&PtrNode<K,V,RbData>)->*mut PtrNode<K,V,RbData> {
     unsafe {
         if n.parent().is_none() {
             return &mut t.root
@@ -23,7 +23,7 @@ impl Rb {
         }
     }    
     }
-    fn insert_helper<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData>,k:K,v:V)->(PtrNode<K,V,RbData>,bool){
+    fn insert_helper<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData,Rb>,k:K,v:V)->(PtrNode<K,V,RbData>,bool){
         let mut x = t.root.clone();
         let mut y = None;
         let mut z = None;
@@ -57,7 +57,7 @@ impl Rb {
         t.size += 1;
         (z,true)
     }
-    fn delete<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData>,n:&mut PtrNode<K,V,RbData>){
+    fn delete<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData,Rb>,n:&mut PtrNode<K,V,RbData>){
         let mut nn = n.clone();
         if !n.left().is_none() && !n.right().is_none() {
             nn = GetPtr::pred(n);
@@ -87,7 +87,7 @@ impl Rb {
         }
         t.size -= 1;
     }
-    fn delete_fixup<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData>,mut x:PtrNode<K,V,RbData>,mut p:PtrNode<K,V,RbData>){
+    fn delete_fixup<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData,Rb>,mut x:PtrNode<K,V,RbData>,mut p:PtrNode<K,V,RbData>){
         unsafe {
             while x.get_ptr() != t.root.get_ptr() && !is_red(x) {
                 if x.get_ptr() == p.left().get_ptr() {
@@ -149,7 +149,7 @@ impl Rb {
             }
         }
     }
-    fn rotate_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData>,x:&mut PtrNode<K,V,RbData>)->PtrNode<K,V,RbData> {
+    fn rotate_left<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData,Rb>,x:&mut PtrNode<K,V,RbData>)->PtrNode<K,V,RbData> {
         if x.right().is_none() {
             panic!("rotate_left:x.Right==nil\n{:?}\n{:?}",t.to_string(),t.size);
         }
@@ -172,7 +172,7 @@ impl Rb {
         x.set_parent(y.clone());
         y
     }
-    fn rotate_right<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData>,x:&mut PtrNode<K,V,RbData>)->PtrNode<K,V,RbData> {
+    fn rotate_right<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,RbData,Rb>,x:&mut PtrNode<K,V,RbData>)->PtrNode<K,V,RbData> {
         if x.left().is_none() {
             panic!("rotate_right:x.Left==nil\n{:?}\n{:?}",t.to_string(),t.size);
         }
@@ -249,8 +249,8 @@ impl Debug for RbData{
         write!(f,"(c:{:?})",self.colour)
     }
 }
-impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,RbData> for Rb {
-    fn insert(&mut self,t:&mut Tree<K,V,RbData>,k:K,v:V)->bool{
+impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,RbData,Rb> for Rb {
+    fn insert(&mut self,t:&mut Tree<K,V,RbData,Rb>,k:K,v:V)->bool{
         let (mut x,rc) = Rb::insert_helper(t,k,v);
         if !rc { return rc; }
         unsafe {
@@ -295,7 +295,7 @@ impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,RbData> for Rb {
         }
         true
     }
-    fn delete(&mut self,t:&mut Tree<K,V,RbData>,k:&K)->bool{
+    fn delete(&mut self,t:&mut Tree<K,V,RbData,Rb>,k:&K)->bool{
         let mut n = t.find(k).data;
         if n.is_none() {
             return false;
@@ -303,7 +303,7 @@ impl<K:Ord+Clone+Debug,V:Debug> ITree<K,V,RbData> for Rb {
         Rb::delete(t,&mut n);
         true
     }
-    fn validate(&self,t:&mut Tree<K,V,RbData>)->bool{
+    fn validate(&self,t:&mut Tree<K,V,RbData,Rb>)->bool{
         Rb::validate(t.root)>0
     }
 }

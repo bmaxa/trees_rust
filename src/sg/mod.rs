@@ -15,10 +15,10 @@ impl Debug for SgData{
     }
 }
 impl Sg {
-    pub fn new<K:Ord+Clone+Debug,V:Debug>()->Tree<K,V,SgData> {
-        Tree::new(Box::new(Sg{max_size:0,counter:0}))
+    pub fn new<K:Ord+Clone+Debug,V:Debug>()->Tree<K,V,SgData,Sg> {
+        Tree::new(Sg{max_size:0,counter:0})
     }
-    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,SgData>,n:&PtrNode<K,V,SgData>)->*mut PtrNode<K,V,SgData> {
+    fn get_parent<K:Ord+Clone+Debug,V:Debug>(t:&mut Tree<K,V,SgData,Sg>,n:&PtrNode<K,V,SgData>)->*mut PtrNode<K,V,SgData> {
         unsafe {
         if n.parent().is_none() {
             return &mut t.root
@@ -31,7 +31,7 @@ impl Sg {
         }
         }    
     }
-   fn delete<K:Ord+Clone+Debug,V:Debug>(&mut self,t:&mut Tree<K,V,SgData>,n:&mut PtrNode<K,V,SgData>){
+   fn delete<K:Ord+Clone+Debug,V:Debug>(&mut self,t:&mut Tree<K,V,SgData,Sg>,n:&mut PtrNode<K,V,SgData>){
         let mut nn = n.clone();
         if !n.left().is_none() && !n.right().is_none() {
             nn = GetPtr::pred(n);
@@ -56,7 +56,9 @@ impl Sg {
         if (t.size as f64) < 0.50*self.max_size as f64 {
             self.max_size = t.size;
             self.counter += 1;
-            println!("counter {}",self.counter);
+            if cfg!(feature = "debug") {
+                println!("counter {}",self.counter);
+            }
             self.perfect_balance(t,t.root,t.size);
         }
     }
@@ -67,7 +69,7 @@ impl Sg {
         v.push(n.clone());
         Sg::for_each_node(n.right(),v);
     }
-    fn perfect_balance<K,V>(&mut self,t:&mut Tree<K,V,SgData>,n:PtrNode<K,V,SgData>,size:usize)
+    fn perfect_balance<K,V>(&mut self,t:&mut Tree<K,V,SgData,Sg>,n:PtrNode<K,V,SgData>,size:usize)
     where K:Ord+Clone+Debug,V:Debug{
         if n.is_none() { return; }
         let mut v = Vec::new();
@@ -84,7 +86,7 @@ impl Sg {
             sg.root = None;
         }
     }
-    fn insert_divide<K,V>(&mut self,t:&mut Tree<K,V,SgData>, b:usize,e:usize,v:&Vec<PtrNode<K,V,SgData>>,parent:PtrNode<K,V,SgData>, left:bool)
+    fn insert_divide<K,V>(&mut self,t:&mut Tree<K,V,SgData,Sg>, b:usize,e:usize,v:&Vec<PtrNode<K,V,SgData>>,parent:PtrNode<K,V,SgData>, left:bool)
     where K:Ord+Clone+Debug,V:Debug{
         assert!(b<=e);
         if e == b { return }
@@ -106,8 +108,8 @@ impl Sg {
         self.insert_divide(t,(e+b)/2+1,e,v,p,false);
     }
 }
-impl <K:Ord+Clone+Debug,V:Debug> ITree<K,V,SgData> for Sg {
-    fn insert(&mut self,t:&mut Tree<K,V,SgData>,k:K,v:V)->bool {
+impl <K:Ord+Clone+Debug,V:Debug> ITree<K,V,SgData,Sg> for Sg {
+    fn insert(&mut self,t:&mut Tree<K,V,SgData,Sg>,k:K,v:V)->bool {
             if t.root.is_none() {
             t.root = Some(Box::into_raw(Box::new(Node::new(k,v,SgData))));
             t.size += 1;
@@ -161,7 +163,7 @@ impl <K:Ord+Clone+Debug,V:Debug> ITree<K,V,SgData> for Sg {
         }
         true
     }
-    fn delete(&mut self,t:&mut Tree<K,V,SgData>,k:&K)->bool {
+    fn delete(&mut self,t:&mut Tree<K,V,SgData,Sg>,k:&K)->bool {
         let mut n = t.find(k).data;
         if !n.is_none() {
             self.delete(t,&mut n);
@@ -170,7 +172,7 @@ impl <K:Ord+Clone+Debug,V:Debug> ITree<K,V,SgData> for Sg {
             false
         }
     }
-    fn validate(&self, t:&mut Tree<K,V,SgData>)->bool {
+    fn validate(&self, t:&mut Tree<K,V,SgData,Sg>)->bool {
         validate(t.root.clone())
     }
 }

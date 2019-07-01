@@ -24,23 +24,6 @@ struct Trta {
     a: [i32;512]
 }
 
-fn bench<T:Debug>(t :&mut Tree<String,i32,T>,v:&Vec<String>,op:&str) {
-    let start = Instant::now();
-    let mut k = 0;
-    let mut sum = 0;
-    for i in v.iter().rev() {
-        let start = unsafe {_rdtsc()};
-        t.insert(i.clone(),k);
-        k += 1;
-        let end = unsafe{_rdtsc()};
-        sum += end-start;
-    }
-    println!("average op {}",sum/v.len()as u64);
-    let end = start.elapsed();
-    let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
-    let (l,r) = t.weight();
-    println!("{} {} time {}\n{}\nheight {}\nweight ({},{})",unsafe{std::intrinsics::type_name::<Tree<String,i32,T>>()},op,diff,t.validate(),t.height(),l,r);
-}
 fn seed()->[u32;4] {
     use std::io::prelude::*;
     use std::fs::File;
