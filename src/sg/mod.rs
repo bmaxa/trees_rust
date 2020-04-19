@@ -5,7 +5,7 @@ use std::fmt;
 use std::fmt::Debug;
 
 pub struct Sg {
-    max_size:usize,counter: usize,
+    max_size:usize,pub counter: usize,
 }
 
 pub struct SgData;

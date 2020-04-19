@@ -1,6 +1,6 @@
 //#![feature(rand)]
-#![feature(rustc_private)]
-#![feature(core_intrinsics)]
+//#![feature(rustc_private)]
+//#![feature(core_intrinsics)]
 extern crate binary_trees;
 use std::mem;
 use binary_trees::Node;
@@ -153,7 +153,8 @@ fn main() {
     let end = start.elapsed();
     let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
     let (l,r) = t3.weight();
-    println!("t3 insert time {}\n{}\nheight {}\nweight ({},{})",diff,t3.validate(),t3.height(),l,r);
+    println!("t3 insert time {}\n{}\nheight {}\nweight ({},{})\ncounter {}",diff,t3.validate(),t3.height(),l,r,t3.pimpl.counter);
+    t3.pimpl.counter = 0;
     let start = Instant::now();
     let mut k = 0;
     let mut sum = 0;
@@ -331,7 +332,7 @@ fn main() {
 //    t.clear();
     let end = start.elapsed();
     let diff = (end.as_secs()*1000000000+end.subsec_nanos() as u64) as f64 / 1000000000.0;
-    println!("t3 delete time {}\n{} size {}",diff,t3.validate(),t3.size());
+    println!("t3 delete time {}\n{} size {}\ncounter {}",diff,t3.validate(),t3.size(),t3.pimpl.counter);
     println!("{}",t3.to_string());
 
     let start = Instant::now();

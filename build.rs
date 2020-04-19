@@ -19,4 +19,5 @@ fn main() {
                       .status().unwrap();
     println!("cargo:rustc-link-search=native={}", out_dir);
     println!("cargo:rustc-link-lib=static=rdtsc");
+    println!("cargo:rustc-link-lib=dylib=atomic");
 }

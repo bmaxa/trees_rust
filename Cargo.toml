@@ -7,7 +7,7 @@ authors = ["Branimir Maksimovic <branimir.maksimovic@gmail.com>"]
 time = "*"
 
 [dependencies.rand]
-version = "*"
+version = "0.7"
 features = ["small_rng"]
 
 [profile.release]
