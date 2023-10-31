@@ -1,0 +1,13 @@
+[package]
+name = "list"
+version = "1.0.0"
+license = "MIT/Apache-2.0"
+authors = ["Branimir Maksimovic <branimir.maksimovic@gmail.com>"]
+
+[dependencies]
+rand = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+#target-cpu = haswell
